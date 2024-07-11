@@ -38,6 +38,7 @@
 #include <QPlainTextEdit>
 #include <QMenu>
 #include <QDialog>
+#include <QRegularExpression>  // Include this header for QRegularExpression
 
 MRichTextEdit::MRichTextEdit(QWidget *parent) : QWidget(parent) {
     setupUi(this);
@@ -171,10 +172,14 @@ MRichTextEdit::MRichTextEdit(QWidget *parent) : QWidget(parent) {
     foreach(int size, db.standardSizes())
         f_fontsize->addItem(QString::number(size));
 
-    connect(f_fontsize, SIGNAL(activated(QString)),
-            this, SLOT(textSize(QString)));
+    // connect(f_fontsize, SIGNAL(activated(QString)),
+    //         this, SLOT(textSize(QString)));
+    connect(f_fontsize, SIGNAL(activated(int)), this, SLOT(textSize(int)));
+
     f_fontsize->setCurrentIndex(f_fontsize->findText(QString::number(QApplication::font()
-                                                                   .pointSize())));
+                                                                   .pointSize())));    
+
+
 
     // text foreground color
 
@@ -195,7 +200,15 @@ MRichTextEdit::MRichTextEdit(QWidget *parent) : QWidget(parent) {
     connect(f_image, SIGNAL(clicked()), this, SLOT(insertImage()));
 }
 
-
+void MRichTextEdit::textSize(int index) {
+    // Your implementation to handle font size change based on index
+    qreal pointSize = f_fontsize->itemText(index).toDouble();
+    if (pointSize > 0) {
+        QTextCharFormat fmt;
+        fmt.setFontPointSize(pointSize);
+        mergeFormatOnWordOrSelection(fmt);
+    }
+}
 void MRichTextEdit::textSource() {
     QDialog *dialog = new QDialog(this);
     QPlainTextEdit *pte = new QPlainTextEdit(dialog);
@@ -545,13 +558,17 @@ void MRichTextEdit::slotClipboardDataChanged() {
 
 QString MRichTextEdit::toHtml() const {
     QString s = f_textedit->toHtml();
-    // convert emails to links
-    s = s.replace(QRegExp("(<[^a][^>]+>(?:<span[^>]+>)?|\\s)([a-zA-Z\\d]+@[a-zA-Z\\d]+\\.[a-zA-Z]+)"), "\\1<a href=\"mailto:\\2\">\\2</a>");
-    // convert links
-    s = s.replace(QRegExp("(<[^a][^>]+>(?:<span[^>]+>)?|\\s)((?:https?|ftp|file)://[^\\s'\"<>]+)"), "\\1<a href=\"\\2\">\\2</a>");
-    // see also: Utils::linkify()
+
+    // Convert emails to links
+    s = s.replace(QRegularExpression("(<[^a][^>]+>(?:<span[^>]+>)?|\\s)([a-zA-Z\\d]+@[a-zA-Z\\d]+\\.[a-zA-Z]+)"), "\\1<a href=\"mailto:\\2\">\\2</a>");
+
+    // Convert links
+    s = s.replace(QRegularExpression("(<[^a][^>]+>(?:<span[^>]+>)?|\\s)((?:https?|ftp|file)://[^\\s'\"<>]+)"), "\\1<a href=\"\\2\">\\2</a>");
+
+    // See also: Utils::linkify()
     return s;
 }
+
 
 void MRichTextEdit::increaseIndentation() {
     indent(+1);

@@ -56,6 +56,7 @@ class MRichTextEdit : public QWidget, protected Ui::MRichTextEdit {
     void textStrikeout();
     void textItalic();
     void textSize(const QString &p);
+    void textSize(int index);
     void textLink(bool checked);
     void textStyle(int index);
     void textFgColor();
